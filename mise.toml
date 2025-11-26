@@ -1,0 +1,17 @@
+[env]
+# supports arbitrary env vars so mise can be used like direnv/dotenv
+PROJECT_NAME = "{{ config_root | basename }}"
+# create a python venv in the project root and activates it
+_.python.venv = { path = ".venv", create = true }
+
+[tools]
+python = "3.12"
+
+[tasks.alpine-build]
+description = "Build the alpine container"
+run = 'docker build -t abhisheg/alpine/mcp-streamablehttp-proxy --target alpine-release .'
+
+[tasks.node-build]
+description = "Build the node container"
+run = "docker build -t abhisheg/nodejs/mcp-streamablehttp-proxy --target node-release ."
+

@@ -50,30 +50,35 @@ class MCPSession:
         # Don't auto-initialize - wait for client to send initialize request
 
     async def _read_responses(self):
-        """Read responses from the server stdout."""
+        """Read responses from the server stdout, handling partial JSON objects."""
+        buffer = ""
+        chunk_size = 4096
         while self.process and self.process.stdout:
             try:
-                line = await self.process.stdout.readline()
-                if not line:
+                data = await self.process.stdout.read(chunk_size)
+                if not data:
                     break
-
-                line = line.decode().strip()
-                if not line:
-                    continue
-
+                data = data.decode()
+                logger.info(f"Session {self.session_id}: chunk stdout: {data}")
+                buffer += data
                 try:
-                    response = json.loads(line)
+                    buffer = buffer.strip()
+                    logger.info(f"Session {self.session_id}: buffer: {buffer}")
+                    response = json.loads(buffer)
                     await self._handle_response(response)
+                    logger.info(f"Session {self.session_id}: response handled")
+                    buffer = ""
                 except json.JSONDecodeError:
                     logger.warning(
-                        f"Session {self.session_id}: Invalid JSON from server: {line}",
-                    )  # TODO: Break long line
+                        f"Session {self.session_id}: Invalid JSON from server, waiting for more data",)
+                    # not enough data to parse a complete JSON object
+                    # keep reading until we get a complete one
                     continue
 
             except Exception as e:
                 logger.error(
                     f"Session {self.session_id}: Error reading from server: {e}",
-                )  # TODO: Break long line
+                )
                 break
 
     async def _handle_response(self, response: Dict[str, Any]):

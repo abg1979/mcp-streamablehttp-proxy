@@ -49,8 +49,8 @@ Examples:
     parser.add_argument(
         "--timeout",
         type=int,
-        default=300,
-        help="Session timeout in seconds (default: 300)",
+        default=int(os.getenv("MCP_SESSION_TIMEOUT", "3000")),
+        help="Session timeout in seconds (default: 3000)",
     )
 
     parser.add_argument(
